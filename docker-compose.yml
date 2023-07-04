@@ -1,0 +1,28 @@
+version: "3.9"
+services:
+  proxy:
+    container_name: proxy
+    build: .
+    platform: linux/amd64
+    restart: on-failure
+    networks:
+      - dockernetwork
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./certbot/www:/var/www/certbot/:ro
+      - ./certbot/conf/:/etc/nginx/ssl/:ro
+  certbot:
+    container_name: certbot
+    image: certbot/certbot:latest
+    volumes:
+      - ./certbot/www/:/var/www/certbot/:rw
+      - ./certbot/conf/:/etc/letsencrypt/:rw
+    # entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+    depends_on:
+      - proxy
+networks:
+  dockernetwork:
+    name: dockernetwork
+    external: true
